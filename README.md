@@ -1,59 +1,135 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# OptimaChain
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> **Predict. Prevent. Optimise.**
 
-## About Laravel
+OptimaChain is an AI-powered supply chain intelligence and credit scoring platform designed to help distributors, managers, logistics operators, and financial institutions collaborate seamlessly. Starting with the cement distribution ecosystem, OptimaChain analyzes historical sales, inventory, weather metrics, and fulfillment data to deliver high-precision demand forecasting, automated review queues, and cryptographic credit scorecards for bank financing.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Instead of merely reflecting past performance, OptimaChain turns raw supply chain telemetry into actionable foresight—eliminating stockouts, reducing excess inventory, and unlocking institutional credit access for distribution-driven businesses across Africa.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🔗 Live Links & Repository
 
-## Learning Laravel
+* **Live Platform:** [https://optimachain.hybriddefi.com](https://optimachain.hybriddefi.com)
+* **GitHub Repository:** [https://github.com/thomasonyemechi/optima_chain](https://github.com/thomasonyemechi/optima_chain)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 👥 Team Details
 
-## Laravel Sponsors
+* **Team Name:** OptimaChain
+* **Team ID:** Team 14
+* **Team Members:**
+  * **Olaleye Ayobami Joshua**
+  * **Abayomi Joshua Olabamiji**
+  * **Thomas Onyemechi Gideon**
+  * **Eberechukwu Antoinette Uzuegbunam**
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🔑 Demo Access Credentials
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+> **Universal Password for all accounts:** `OptimaDemo!2026`
 
-## Contributing
+| Role | Email Address |
+| :--- | :--- |
+| **Super Admin** | `demo.admin@optima-chain.test` |
+| **Manager** | `manager@demo.com` |
+| **Manager (Alt)** | `demo.manager@optima-chain.test` |
+| **Logistics** | `logistics@demo.com` |
+| **Logistics (Alt)** | `demo.logistics@optima-chain.test` |
+| **Bank / Auditor** | `bank@demo.com` |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## ✨ Key Features
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+* **AI-Driven Demand Forecasting:** Utilizes XGBoost quantile regression coupled with real-time weather metrics (Open-Meteo) to dynamically compute Low ($L$), Expected ($E$), and High ($H$) demand bands for each distribution location.
+* **Automated Demand Review Queue:** Automatically approves requests falling within safe parameters ($L \le R \le H$), flags anomalous spikes ($R > H$), and flags stockout risks ($R < L$).
+* **Role-Based Workspaces:** Tailored dashboards and portals for Distributors, Managers, Logistics Teams, and Bank Auditors.
+* **Fairness & Short-Supply Safeguards:** Incorporates company short-supply exemption logic to protect distributor credit scores during factory-wide stock outages.
+* **Cryptographic Credit Scoring & Bank Verification:** Generates weighted, tamper-evident performance scorecards accessible via a public verification portal (`/verify/{code}`).
+* **Discrepancy Tracking:** Automatically logs discrepancy tickets whenever delivered quantities ($D$) diverge from confirmed received quantities ($C$).
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🛠️ Tech Stack & Architecture
 
-## License
+OptimaChain uses a hybrid architecture pairing a robust PHP backend with a dedicated Python Machine Learning microservice.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend UI** | Laravel Blade, Livewire 3, Alpine.js, Tailwind CSS |
+| **Backend Core** | Laravel 11 (PHP 8.2+), MySQL |
+| **AI / ML Microservice** | Python 3.10+, FastAPI, XGBoost, Pandas, Scikit-Learn |
+| **External APIs** | Open-Meteo Weather API |
+| **Authentication & Roles** | Spatie Laravel-Permission |
+
+---
+
+## 🚀 Local Development Setup
+
+Follow these steps to set up OptimaChain locally for development and testing.
+
+### Prerequisites
+* PHP $\ge$ 8.2 & Composer
+* Python $\ge$ 3.10 & `pip`
+* MySQL Database
+* Node.js & npm (optional, if compiling custom Tailwind assets)
+
+---
+
+### 1. Backend Setup (Laravel)
+
+```bash
+# Clone the repository
+git clone [https://github.com/thomasonyemechi/optima_chain.git](https://github.com/thomasonyemechi/optima_chain.git)
+cd optima_chain
+
+# Install PHP dependencies
+composer install
+
+# Environment configuration
+cp .env.example .env
+php artisan key:generate
+
+# Configure your MySQL database details in .env:
+# DB_DATABASE=optimachain
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# Set Python AI Engine service endpoint in .env
+echo "AI_FORECAST_SERVICE_URL=[http://127.0.0.1:8000](http://127.0.0.1:8000)" >> .env
+
+# Run migrations and seed test accounts/data
+php artisan migrate:fresh --seed
+
+# Start the Laravel application
+php artisan serve
+
+
+
+
+
+#AI Engine Setup (Python FastAPI)
+#Open a separate terminal window and run:
+
+
+cd ai-engine
+
+# Create and activate virtual environment
+python -m venv venv
+
+# On Mac/Linux:
+source venv/bin/activate
+# On Windows:
+# venv\Scripts\activate
+
+# Install required packages
+pip install -r requirements.txt
+
+# Train initial model artifact (generates demand_model.pkl)
+python train.py
+
+# Launch FastAPI microservice on port 8000
+uvicorn main:app --reload --port 8000
