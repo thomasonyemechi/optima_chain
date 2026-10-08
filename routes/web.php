@@ -7,6 +7,7 @@ use App\Http\Controllers\DemandRequestController;
 use App\Http\Controllers\ManagerOperationsController;
 use App\Http\Controllers\PublicVerificationController;
 use App\Http\Controllers\ScorecardController;
+use App\Livewire\DistributorForecastSession;
 use App\Livewire\ManagerForecastOverview;
 use Illuminate\Support\Facades\Route;
 
@@ -35,7 +36,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware(['auth', 'role:distributor'])->group(function (): void {
-    Route::get('/demand/request', [DemandRequestController::class, 'create'])->name('demand.request');
+    Route::get('/demand/request', DistributorForecastSession::class)->name('demand.request');
     Route::post('/demand/request', [DemandRequestController::class, 'store'])->name('demand.request.store');
 
     Route::get('/receipt/confirm', [DemandRequestController::class, 'receiptForm'])->name('receipt.confirm');

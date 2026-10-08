@@ -9,7 +9,7 @@
             <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[28px]">Distributor Demand Forecasts</h1>
             <p class="mt-1 text-sm text-slate-500">Current week · W{{ str_pad((string) now()->isoWeek, 2, '0', STR_PAD_LEFT) }} {{ now()->isoWeekYear }}</p>
         </div>
-        <div class="grid gap-3 sm:grid-cols-[minmax(220px,1fr)_180px_170px] xl:w-[720px]">
+        <div class="grid gap-3 sm:grid-cols-2 xl:w-[900px] xl:grid-cols-[minmax(220px,1fr)_180px_180px_180px]">
             <label class="relative">
                 <span class="sr-only">Search distributor or location code</span>
                 <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">⌕</span>
@@ -25,13 +25,26 @@
                 </select>
             </label>
             <label>
+                <span class="sr-only">Filter by request status</span>
+                <select wire:model.live="statusFilter" class="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                    <option value="">All statuses</option>
+                    <option value="auto_approved">Auto-approved</option>
+                    <option value="flagged">Flagged</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </label>
+            <label>
                 <span class="sr-only">Filter by forecast risk</span>
                 <select wire:model.live="riskFilter" class="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
-                    <option value="">All risk levels</option>
+                    <option value="">All range positions</option>
                     <option value="within">Within band</option>
                     <option value="outside">Outside band</option>
                     <option value="pending">No submission</option>
                 </select>
+            </label>
+            <label class="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                <input type="checkbox" wire:model.live="highRiskOnly" class="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                <span>High risk only (R &gt; H)</span>
             </label>
         </div>
     </div>
@@ -47,7 +60,7 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1000px] text-left text-sm">
+            <table class="w-full min-w-[1180px] text-left text-sm">
                 <thead class="border-b border-slate-100 bg-slate-50/70 text-[10px] font-semibold tracking-wide text-slate-400">
                     <tr>
                         <th scope="col" class="px-5 py-3.5 sm:px-6">DISTRIBUTOR / LOCATION</th>
@@ -57,6 +70,7 @@
                         <th scope="col" class="px-3 py-3.5 text-right">REQUEST (R)</th>
                         <th scope="col" class="w-[280px] px-4 py-3.5">RANGE POSITION</th>
                         <th scope="col" class="px-5 py-3.5 sm:px-6">STATUS</th>
+                        <th scope="col" class="px-5 py-3.5 text-right sm:px-6">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -72,7 +86,7 @@
                         @endphp
                         <tr wire:key="forecast-{{ $forecast->id }}" class="transition-colors hover:bg-slate-50/70">
                             <td class="px-5 py-4 sm:px-6">
-                                <button type="button" wire:click="openDetails({{ $row['location']->id }})" class="group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
+                                <button type="button" wire:click="openDetails({{ $row['location']->id }}, {{ $row['request']?->id ?? 'null' }})" class="group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                                     <span class="block font-semibold text-slate-800 group-hover:text-indigo-700">{{ $row['distributor']->company_name }}</span>
                                     <span class="mt-1 flex items-center gap-1.5 text-xs text-slate-500"><span class="font-mono font-medium text-slate-600">{{ $row['location']->code }}</span><span aria-hidden="true">·</span>{{ $row['location']->name }}<span class="text-indigo-500" aria-hidden="true">↗</span></span>
                                 </button>
@@ -101,17 +115,25 @@
                                 @elseif ($status === 'flagged')
                                     <span class="inline-flex whitespace-nowrap rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">Flagged</span>
                                 @elseif ($status === 'pending')
-                                    <span class="inline-flex whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">Pending submission</span>
+                                    <span class="inline-flex whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{{ $row['request'] ? 'Pending review' : 'Pending submission' }}</span>
                                 @elseif ($status === 'adjusted')
                                     <span class="inline-flex whitespace-nowrap rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">Adjusted</span>
                                 @else
                                     <span class="inline-flex whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">{{ ucfirst(str_replace('_', ' ', $status)) }}</span>
                                 @endif
                             </td>
+                            <td class="px-5 py-4 text-right sm:px-6">
+                                <div class="inline-flex items-center gap-2">
+                                    @if ($row['reviewable'])
+                                        <button type="button" wire:click="openDetails({{ $row['location']->id }}, {{ $row['request']->id }})" class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">Review Request</button>
+                                    @endif
+                                    <button type="button" wire:click="openDetails({{ $row['location']->id }})" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">View Analytics</button>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-16 text-center">
+                            <td colspan="8" class="px-6 py-16 text-center">
                                 <span class="mx-auto grid size-11 place-items-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">⌕</span>
                                 <p class="mt-3 text-sm font-semibold text-slate-800">No forecasts match these filters</p>
                                 <p class="mt-1 text-xs text-slate-500">Try another location, risk level, or search term.</p>
@@ -122,7 +144,7 @@
             </table>
         </div>
         <div class="flex flex-col gap-2 border-t border-slate-100 px-5 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <span>Forecast ranges shown for the current ISO week.</span>
+            <span>Forecast ranges shown for the current ISO week. Delivered quantities use confirmed receipts.</span>
             <span class="flex items-center gap-3"><span class="inline-flex items-center gap-1.5"><i class="size-2 rounded-full bg-indigo-600"></i>Request</span><span class="inline-flex items-center gap-1.5"><i class="size-2 rounded-full bg-amber-500"></i>Outside range</span></span>
         </div>
     </section>
@@ -141,8 +163,70 @@
 
             <div class="flex-1 space-y-5 overflow-y-auto p-5 sm:p-7">
                 @if ($details)
+                    @if ($reviewNotice)
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status">{{ $reviewNotice }}</div>
+                    @endif
+
+                    @if ($details['review_request'] && in_array($details['review_request']->status, ['flagged', 'pending'], true))
+                        <article class="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 shadow-sm sm:p-6">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-[10px] font-semibold tracking-wide text-indigo-600">MANAGER REVIEW</p>
+                                    <h3 class="mt-1 text-sm font-semibold text-slate-900">Request {{ number_format($details['review_request']->requested_qty) }} units</h3>
+                                    <p class="mt-1 text-xs text-slate-500">Choose the requested quantity or set an override of up to the submitted quantity.</p>
+                                </div>
+                                <span class="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-indigo-700">{{ ucfirst($details['review_request']->status) }}</span>
+                            </div>
+                            <label class="mt-4 block text-xs font-medium text-slate-600">
+                                Approved quantity
+                                <input type="number" min="0" max="{{ $details['review_request']->requested_qty }}" wire:model="approvedQuantity" class="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                @error('approvedQuantity')<span class="mt-1 block text-xs text-rose-600">{{ $message }}</span>@enderror
+                            </label>
+                            <label class="mt-3 flex items-start gap-2 text-xs text-slate-600">
+                                <input type="checkbox" wire:model="companyShortSupply" class="mt-0.5 size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <span>Company short-supply exemption</span>
+                            </label>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <button type="button" wire:click="approveRequested" wire:loading.attr="disabled" class="rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">Approve Requested (A = R)</button>
+                                <button type="button" wire:click="overrideRequest" wire:loading.attr="disabled" class="rounded-lg border border-indigo-200 bg-white px-3.5 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-60">Save Custom Override</button>
+                            </div>
+                            @error('demand_request')<p class="mt-3 text-xs text-rose-600">{{ $message }}</p>@enderror
+                        </article>
+                    @endif
+
                     <article class="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
-                        <div class="flex items-start justify-between gap-3"><div><h3 class="text-sm font-semibold text-slate-900">Historical sales vs forecast</h3><p class="mt-1 text-xs text-slate-500">Completed request periods · units</p></div><span class="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-medium text-indigo-700">{{ $details['history']->count() }} weeks</span></div>
+                        <div class="flex items-start justify-between gap-3">
+                            <div><h3 class="text-sm font-semibold text-slate-900">Past 4 weeks: requested vs delivered vs sold</h3><p class="mt-1 text-xs text-slate-500">Delivered is based on receipt-confirmed quantities.</p></div>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-600">R / D / S · units</span>
+                        </div>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="w-full min-w-[420px] text-left text-xs">
+                                <thead class="text-[10px] font-semibold tracking-wide text-slate-400"><tr><th class="py-2">WEEK</th><th class="px-2 py-2 text-right">REQUESTED (R)</th><th class="px-2 py-2 text-right">DELIVERED (D)</th><th class="py-2 text-right">SOLD (S)</th></tr></thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach ($details['weekly_metrics'] as $metric)
+                                        <tr><th class="py-2.5 font-medium text-slate-600">{{ $metric['label'] }}</th><td class="px-2 py-2.5 text-right tabular-nums text-slate-700">{{ $metric['requested'] === null ? '—' : number_format($metric['requested']) }}</td><td class="px-2 py-2.5 text-right tabular-nums text-slate-700">{{ $metric['delivered'] === null ? '—' : number_format($metric['delivered']) }}</td><td class="py-2.5 text-right tabular-nums text-slate-700">{{ $metric['sold'] === null ? '—' : number_format($metric['sold']) }}</td></tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
+                        <div class="flex items-start justify-between gap-3"><div><h3 class="text-sm font-semibold text-slate-900">Five-year seasonal sales comparison</h3><p class="mt-1 text-xs text-slate-500">Average weekly sold units by calendar month.</p></div><span class="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-medium text-indigo-700">{{ min(5, count($details['seasonal_years'])) }} years</span></div>
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="w-full min-w-[600px] text-left text-xs">
+                                <thead class="text-[10px] font-semibold tracking-wide text-slate-400"><tr><th class="py-2">MONTH</th>@foreach ($details['seasonal_years'] as $seasonalYear)<th class="px-2 py-2 text-right">{{ $seasonalYear }}</th>@endforeach</tr></thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach ($details['seasonal_comparison'] as $month)
+                                        <tr><th class="py-2 font-medium text-slate-600">{{ $month['month'] }}</th>@foreach ($details['seasonal_years'] as $seasonalYear)<td class="px-2 py-2 text-right tabular-nums text-slate-700">{{ $month['values'][$seasonalYear] === null ? '—' : number_format($month['values'][$seasonalYear], 1) }}</td>@endforeach</tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
+                        <div class="flex items-start justify-between gap-3"><div><h3 class="text-sm font-semibold text-slate-900">Historical sales vs forecast</h3><p class="mt-1 text-xs text-slate-500">Completed request periods from up to five years of history · units</p></div><span class="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-medium text-indigo-700">{{ $details['history']->count() }} weeks</span></div>
                         @if ($details['history']->isNotEmpty())
                             @php
                                 $salesPoints = $details['history']->map(fn (array $point, int $index): string => round(32 + ($index * (636 / max(1, $details['history']->count() - 1))), 1).','.round(176 - (min(100, $point['sales_y']) * 1.35), 1))->implode(' ');

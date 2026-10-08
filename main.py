@@ -7,7 +7,7 @@ import os
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 
 import httpx
 import joblib
@@ -146,17 +146,25 @@ async def get_weather_forecast(
     try:
         if owns_client:
             client = httpx.AsyncClient(timeout=WEATHER_TIMEOUT_SECONDS)
-        assert client is not None
+        if client is None:
+            raise WeatherServiceError("Open-Meteo HTTP client is unavailable.")
         response = await client.get(OPEN_METEO_URL, params=params)
         if response.status_code == 400:
             try:
-                detail = response.json().get("reason", "forecast unavailable")
+                error_payload = response.json()
+                detail = (
+                    error_payload.get("reason", "forecast unavailable")
+                    if isinstance(error_payload, dict)
+                    else "forecast unavailable"
+                )
             except ValueError:
                 detail = "forecast unavailable"
             raise WeatherForecastUnavailable(str(detail))
         response.raise_for_status()
         payload = response.json()
     except WeatherForecastUnavailable:
+        raise
+    except httpx.TimeoutException:
         raise
     except (httpx.HTTPError, ValueError) as error:
         raise WeatherServiceError("Open-Meteo returned an invalid response.") from error
@@ -170,7 +178,9 @@ async def get_weather_forecast(
     dates = daily.get("time")
     temperatures = daily.get("temperature_2m_mean")
     precipitation = daily.get("precipitation_sum")
-    if not all(isinstance(values, list) for values in (dates, temperatures, precipitation)):
+    if not all(
+        isinstance(values, list) for values in (dates, temperatures, precipitation)
+    ):
         raise WeatherServiceError("Open-Meteo response has incomplete daily data.")
     if not (len(dates) == len(temperatures) == len(precipitation)):
         raise WeatherServiceError("Open-Meteo returned mismatched daily data.")
@@ -183,7 +193,10 @@ async def get_weather_forecast(
         for index, forecast_date in enumerate(dates)
         if forecast_date in requested_dates
     ]
-    if len(selected) != 7:
+    if (
+        len(selected) != 7
+        or {dates[index] for index in selected} != requested_dates
+    ):
         raise WeatherForecastUnavailable(
             f"A complete forecast is not available for ISO week "
             f"{week_number} of {forecast_year}."

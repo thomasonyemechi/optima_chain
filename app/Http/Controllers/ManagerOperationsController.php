@@ -33,7 +33,7 @@ class ManagerOperationsController extends Controller
         return view('pages.manager.review-queue', compact('flaggedRequests'));
     }
 
-    public function review(Request $request): RedirectResponse
+    public function review(Request $request, DemandRequestService $service): RedirectResponse
     {
         $validated = $request->validate([
             'demand_request_id' => ['required', 'integer', 'exists:demand_requests,id'],
@@ -42,21 +42,13 @@ class ManagerOperationsController extends Controller
             'company_short_supply' => ['sometimes', 'boolean'],
         ]);
 
-        $demandRequest = DemandRequest::query()->where('status', 'flagged')->findOrFail($validated['demand_request_id']);
-        validator($validated, [
-            'approved_qty' => ['required', 'integer', 'min:0', 'max:'.$demandRequest->requested_qty],
-        ])->validate();
-
-        $status = $validated['decision'] === 'adjust' || (int) $validated['approved_qty'] !== $demandRequest->requested_qty
-            ? 'adjusted'
-            : 'auto_approved';
-
-        $demandRequest->update([
-            'approved_qty' => $validated['approved_qty'],
-            'company_short_supply' => $request->boolean('company_short_supply'),
-            'status' => $status,
-            'flag_reason' => null,
-        ]);
+        $demandRequest = DemandRequest::query()->findOrFail($validated['demand_request_id']);
+        $service->review(
+            $demandRequest,
+            $validated['decision'],
+            (int) $validated['approved_qty'],
+            $request->boolean('company_short_supply'),
+        );
 
         return redirect()->route('manager.review-queue')->with('status', 'The request review was saved.');
     }

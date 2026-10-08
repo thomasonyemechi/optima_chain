@@ -98,6 +98,48 @@ class DemandRequestService
         });
     }
 
+    public function review(
+        DemandRequest $demandRequest,
+        string $decision,
+        int $approvedQuantity,
+        bool $companyShortSupply = false,
+    ): DemandRequest {
+        if (! in_array($decision, ['approve', 'adjust'], true)) {
+            throw ValidationException::withMessages([
+                'decision' => 'Choose whether to approve the request or set an adjusted quantity.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($demandRequest, $decision, $approvedQuantity, $companyShortSupply): DemandRequest {
+            $lockedRequest = DemandRequest::query()->lockForUpdate()->findOrFail($demandRequest->id);
+
+            if (! in_array($lockedRequest->status, ['flagged', 'pending'], true)) {
+                throw ValidationException::withMessages([
+                    'demand_request' => 'Only requests awaiting manager review can be reviewed.',
+                ]);
+            }
+
+            if ($approvedQuantity < 0 || $approvedQuantity > $lockedRequest->requested_qty) {
+                throw ValidationException::withMessages([
+                    'approved_qty' => 'The approved quantity must be between zero and the requested quantity.',
+                ]);
+            }
+
+            $status = $decision === 'adjust' || $approvedQuantity !== $lockedRequest->requested_qty
+                ? 'adjusted'
+                : 'auto_approved';
+
+            $lockedRequest->forceFill([
+                'approved_qty' => $approvedQuantity,
+                'company_short_supply' => $companyShortSupply,
+                'status' => $status,
+                'flag_reason' => null,
+            ])->save();
+
+            return $lockedRequest->refresh();
+        });
+    }
+
     public function confirmReceipt(DemandRequest $demandRequest, string $confirmationCode, int $confirmedQuantity): DemandRequest
     {
         if ($confirmedQuantity < 0) {

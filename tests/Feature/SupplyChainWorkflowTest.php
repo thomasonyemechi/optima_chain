@@ -297,6 +297,143 @@ it('shows current forecasts with search, risk filters, and historical detail con
         ->assertSee('North Region');
 });
 
+it('filters current forecasts by saved request status and high risk', function (): void {
+    $fixture = supplyChainFixture();
+    $manager = User::factory()->create(['role' => 'manager']);
+    $fixture['distributor']->demandRequests()->create([
+        'location_id' => $fixture['location']->id,
+        'week_number' => $fixture['forecast']->week_number,
+        'year' => $fixture['forecast']->year,
+        'requested_qty' => 20,
+        'status' => 'flagged',
+    ]);
+    $secondLocation = Location::query()->create([
+        'distributor_id' => $fixture['distributor']->id,
+        'name' => 'Harbor Depot',
+        'code' => 'HARBOR',
+    ]);
+    ForecastBand::query()->create([
+        'location_id' => $secondLocation->id,
+        'week_number' => $fixture['forecast']->week_number,
+        'year' => $fixture['forecast']->year,
+        'low_band' => 5,
+        'expected_band' => 10,
+        'high_band' => 15,
+    ]);
+    $fixture['distributor']->demandRequests()->create([
+        'location_id' => $secondLocation->id,
+        'week_number' => $fixture['forecast']->week_number,
+        'year' => $fixture['forecast']->year,
+        'requested_qty' => 10,
+        'approved_qty' => 10,
+        'status' => 'auto_approved',
+    ]);
+
+    $component = Livewire::actingAs($manager)
+        ->test(ManagerForecastOverview::class)
+        ->set('statusFilter', 'flagged');
+
+    expect($component->instance()->forecastRows->pluck('location.id')->all())->toBe([$fixture['location']->id]);
+    $component->assertSee('CENTRAL');
+
+    $component->set('statusFilter', '')
+        ->set('highRiskOnly', true);
+
+    expect($component->instance()->forecastRows->pluck('location.id')->all())->toBe([$fixture['location']->id]);
+    $component->assertSee('CENTRAL');
+});
+
+it('shows five-year seasonal and four-week request analytics in location details', function (): void {
+    $fixture = supplyChainFixture();
+    $manager = User::factory()->create(['role' => 'manager']);
+
+    foreach (range(now()->isoWeekYear - 4, now()->isoWeekYear) as $year) {
+        $fixture['distributor']->demandRequests()->create([
+            'location_id' => $fixture['location']->id,
+            'week_number' => 10,
+            'year' => $year,
+            'requested_qty' => 14,
+            'dispatched_qty' => 12,
+            'confirmed_qty' => 11,
+            'sales_qty' => 9,
+            'status' => 'completed',
+        ]);
+    }
+
+    Livewire::actingAs($manager)
+        ->test(ManagerForecastOverview::class)
+        ->call('openDetails', $fixture['location']->id)
+        ->assertSee('Five-year seasonal sales comparison')
+        ->assertSee('Past 4 weeks: requested vs delivered vs sold')
+        ->assertSee('DELIVERED (D)')
+        ->assertSee('9.0');
+});
+
+it('allows managers to approve or override requests awaiting review', function (): void {
+    $fixture = supplyChainFixture();
+    $manager = User::factory()->create(['role' => 'manager']);
+    $flaggedRequest = $fixture['distributor']->demandRequests()->create([
+        'location_id' => $fixture['location']->id,
+        'week_number' => $fixture['forecast']->week_number,
+        'year' => $fixture['forecast']->year,
+        'requested_qty' => 20,
+        'status' => 'flagged',
+    ]);
+
+    Livewire::actingAs($manager)
+        ->test(ManagerForecastOverview::class)
+        ->call('openDetails', $fixture['location']->id, $flaggedRequest->id)
+        ->set('companyShortSupply', true)
+        ->call('approveRequested')
+        ->assertSee('Request approved at the requested quantity.');
+
+    expect($flaggedRequest->refresh()->status)->toBe('auto_approved')
+        ->and($flaggedRequest->approved_qty)->toBe(20)
+        ->and($flaggedRequest->company_short_supply)->toBeTrue();
+
+    $secondRequest = $fixture['distributor']->demandRequests()->create([
+        'location_id' => $fixture['location']->id,
+        'week_number' => $fixture['forecast']->week_number,
+        'year' => $fixture['forecast']->year,
+        'requested_qty' => 18,
+        'status' => 'flagged',
+    ]);
+
+    Livewire::actingAs($manager)
+        ->test(ManagerForecastOverview::class)
+        ->call('openDetails', $fixture['location']->id, $secondRequest->id)
+        ->set('approvedQuantity', 12)
+        ->call('overrideRequest')
+        ->assertHasNoErrors()
+        ->assertSee('The adjusted request was saved.');
+
+    expect($secondRequest->refresh()->status)->toBe('adjusted')
+        ->and($secondRequest->approved_qty)->toBe(12);
+});
+
+it('rejects overrides above the request and prevents review by non-managers', function (): void {
+    $fixture = supplyChainFixture();
+    $manager = User::factory()->create(['role' => 'manager']);
+    $flaggedRequest = $fixture['distributor']->demandRequests()->create([
+        'location_id' => $fixture['location']->id,
+        'week_number' => $fixture['forecast']->week_number,
+        'year' => $fixture['forecast']->year,
+        'requested_qty' => 20,
+        'status' => 'flagged',
+    ]);
+
+    Livewire::actingAs($manager)
+        ->test(ManagerForecastOverview::class)
+        ->call('openDetails', $fixture['location']->id, $flaggedRequest->id)
+        ->set('approvedQuantity', 21)
+        ->call('overrideRequest')
+        ->assertHasErrors(['approvedQuantity' => 'max']);
+
+    expect($flaggedRequest->refresh()->status)->toBe('flagged')
+        ->and($flaggedRequest->approved_qty)->toBeNull();
+
+});
+
 it('forbids non-manager roles from mounting the forecast component', function (): void {
     $fixture = supplyChainFixture();
 
