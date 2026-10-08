@@ -1,0 +1,25 @@
+@extends('layouts.app')
+
+@section('title', 'Weekly sales entry')
+
+@section('content')
+    @php($inventoryOnHand = $inventoryOnHand ?? 0)
+    <div class="mx-auto max-w-3xl">
+        <a href="{{ url('distributor/dashboard') }}" class="text-sm font-medium text-slate-500 hover:text-slate-800">← Overview</a>
+        <div class="mt-4 flex items-start justify-between gap-4"><div><p class="text-sm font-medium text-amber-700">PERFORMANCE · STEP 6</p><h1 class="mt-1 text-2xl font-semibold tracking-tight sm:text-[28px]">Weekly sales entry</h1><p class="mt-1 text-sm text-slate-500">Report sales to keep inventory and your scorecard accurate.</p></div><span class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">Step 6 <span class="text-slate-400">/ 8</span></span></div>
+
+        <form method="POST" action="{{ route('sales.entry.store') }}" class="mt-6 space-y-5">
+            @csrf
+            <section class="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><h2 class="text-base font-semibold tracking-tight">Reporting period</h2><p class="mt-1 text-sm text-slate-500">Select the location and week these sales belong to.</p></div><span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">Current week</span></div>
+                <div class="mt-5 grid gap-5 sm:grid-cols-2"><div><label for="location_id" class="mb-1.5 block text-sm font-medium text-slate-700">Location <span class="text-red-600">*</span></label><select id="location_id" name="location_id" required class="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"><option value="">Select a location</option>@foreach (($locations ?? collect()) as $location)<option value="{{ $location->id }}" @selected(old('location_id') == $location->id)>{{ $location->name }}</option>@endforeach</select>@error('location_id')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror</div><div><label for="week_ending" class="mb-1.5 block text-sm font-medium text-slate-700">Week ending <span class="text-red-600">*</span></label><input id="week_ending" name="week_ending" type="date" max="{{ now()->toDateString() }}" value="{{ old('week_ending', now()->toDateString()) }}" required class="h-11 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">@error('week_ending')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror</div></div>
+            </section>
+            <section class="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
+                <h2 class="text-base font-semibold tracking-tight">Sales and inventory</h2><p class="mt-1 text-sm text-slate-500">Sales quantity (S) is deducted from your reported stock on hand.</p>
+                <div class="mt-5 grid gap-5 sm:grid-cols-2"><div><label for="sales_qty" class="mb-1.5 block text-sm font-medium text-slate-700">Weekly sales quantity (S) <span class="text-red-600">*</span></label><input id="sales_qty" name="sales_qty" type="number" min="0" step="1" value="{{ old('sales_qty') }}" data-sales-input required class="h-11 w-full rounded-lg border {{ $errors->has('sales_qty') ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200' }} px-3 text-sm tabular-nums outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">@error('sales_qty')<p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>@enderror</div><div><label for="inventory_on_hand" class="mb-1.5 block text-sm font-medium text-slate-700">Inventory before sales</label><input id="inventory_on_hand" type="number" value="{{ $inventoryOnHand }}" readonly data-stock-input class="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm tabular-nums text-slate-600"></div></div>
+                <div class="mt-5 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3.5"><span><span class="block text-sm font-medium text-slate-700">Estimated balance after sales</span><span class="mt-0.5 block text-xs text-slate-500">Calculated from reported stock minus weekly sales</span></span><span class="text-xl font-semibold tabular-nums text-slate-900" data-inventory-balance aria-live="polite">{{ max(0, $inventoryOnHand - (int) ($salesQuantity ?? 0)) }} units</span></div>
+            </section>
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"><a href="{{ url('distributor/dashboard') }}" class="inline-flex h-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50">Save and exit</a><button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Submit sales report</button></div>
+        </form>
+    </div>
+@endsection
