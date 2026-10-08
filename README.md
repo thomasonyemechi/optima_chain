@@ -22,8 +22,8 @@ Instead of merely reflecting past performance, OptimaChain turns raw supply chai
 * **Team Members:**
   * **Olaleye Ayobami Joshua**
   * **Abayomi Joshua Olabamiji**
-  * **Thomas Onyemechi Gideon**
-  * **Eberechukwu Antoinette Uzuegbunam**
+  * **Thomas Onyemechi Gideon (asst lead)**
+  * **Eberechukwu Antoinette Uzuegbunam (lead)**
 
 ---
 
