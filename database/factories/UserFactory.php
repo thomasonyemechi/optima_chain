@@ -34,6 +34,31 @@ class UserFactory extends Factory
         ];
     }
 
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes): array => ['role' => 'admin']);
+    }
+
+    public function manager(): static
+    {
+        return $this->state(fn (array $attributes): array => ['role' => 'manager']);
+    }
+
+    public function logistics(): static
+    {
+        return $this->state(fn (array $attributes): array => ['role' => 'logistics']);
+    }
+
+    public function bank(): static
+    {
+        return $this->state(fn (array $attributes): array => ['role' => 'bank']);
+    }
+
+    public function distributor(): static
+    {
+        return $this->state(fn (array $attributes): array => ['role' => 'distributor']);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

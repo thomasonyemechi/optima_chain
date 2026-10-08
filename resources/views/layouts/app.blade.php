@@ -22,6 +22,7 @@
                 ['label' => 'Sales entry', 'url' => 'distributor/sales-entry', 'roles' => ['distributor'], 'icon' => '↗'],
                 ['label' => 'Review queue', 'url' => 'manager/review-queue', 'roles' => ['manager', 'admin'], 'icon' => '≡'],
                 ['label' => 'Demand forecasts', 'url' => 'manager/forecasts', 'roles' => ['manager', 'admin'], 'icon' => '⌁'],
+                ['label' => 'Create user', 'url' => 'manager/users/create', 'roles' => ['manager', 'admin'], 'icon' => '＋'],
                 ['label' => 'Dispatch', 'url' => 'manager/dispatch-management', 'roles' => ['manager', 'admin'], 'icon' => '⇢'],
                 ['label' => 'Complaints', 'url' => 'manager/complaints', 'roles' => ['manager', 'admin'], 'icon' => '◇'],
             ]],

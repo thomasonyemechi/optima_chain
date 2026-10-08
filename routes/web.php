@@ -8,6 +8,7 @@ use App\Http\Controllers\ManagerOperationsController;
 use App\Http\Controllers\PublicVerificationController;
 use App\Http\Controllers\ScorecardController;
 use App\Livewire\DistributorForecastSession;
+use App\Livewire\Manager\CreateUserModal;
 use App\Livewire\ManagerForecastOverview;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'role:distributor'])->group(function (): void {
 });
 
 Route::middleware(['auth', 'role:manager,admin'])->prefix('manager')->name('manager.')->group(function (): void {
+    Route::get('/users/create', CreateUserModal::class)->name('users.create');
     Route::get('/forecasts', ManagerForecastOverview::class)->name('forecasts');
     Route::get('/review-queue', [ManagerOperationsController::class, 'reviewQueue'])->name('review-queue');
     Route::post('/review-queue/review', [ManagerOperationsController::class, 'review'])->name('review-queue.review');
